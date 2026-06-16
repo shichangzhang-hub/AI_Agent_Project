@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
@@ -39,6 +40,11 @@ app.add_middleware(
 @app.get("/api/health")
 def health_check() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/", include_in_schema=False)
+def index() -> FileResponse:
+    return FileResponse(public_dir / "index.html")
 
 
 @app.get("/api/budgets/{employee_name}", response_model=BudgetResponse)
