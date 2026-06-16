@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能工单 Agent</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --panel: rgba(255, 250, 243, 0.9);
+      --ink: #1c1a17;
+      --muted: #645d55;
+      --line: rgba(28, 26, 23, 0.12);
+      --accent: #b65c2f;
+      --accent-strong: #8f421b;
+      --success: #236b3a;
+      --shadow: 0 18px 50px rgba(58, 45, 29, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(182, 92, 47, 0.18), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(35, 107, 58, 0.16), transparent 30%),
+        linear-gradient(135deg, #fbf6ed 0%, #efe7da 100%);
+      min-height: 100vh;
+    }
+
+    .page {
+      width: min(1080px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0 56px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      width: fit-content;
+      padding: 6px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 7vw, 64px);
+      line-height: 0.95;
+    }
+
+    .lead {
+      max-width: 720px;
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .chat-card,
+    .examples-card {
+      padding: 22px;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .section-copy {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .messages {
+      display: grid;
+      gap: 12px;
+      min-height: 280px;
+      margin-bottom: 16px;
+    }
+
+    .message {
+      padding: 14px 16px;
+      border-radius: 18px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      border: 1px solid var(--line);
+      animation: rise 220ms ease;
+    }
+
+    .message.user { background: rgba(182, 92, 47, 0.12); }
+    .message.agent { background: rgba(255, 255, 255, 0.7); }
+
+    .composer {
+      display: grid;
+      gap: 12px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      resize: vertical;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.75);
+      color: var(--ink);
+      font: inherit;
+    }
+
+    textarea:focus,
+    button:focus {
+      outline: 2px solid rgba(182, 92, 47, 0.25);
+      outline-offset: 2px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 999px;
+      padding: 13px 20px;
+      font: inherit;
+      transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .primary {
+      background: var(--accent);
+      color: #fffaf4;
+    }
+
+    .primary:hover { background: var(--accent-strong); }
+
+    .secondary {
+      background: rgba(28, 26, 23, 0.08);
+      color: var(--ink);
+    }
+
+    .status {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .status.ok { color: var(--success); }
+
+    .example-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .example {
+      width: 100%;
+      text-align: left;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.65);
+      color: var(--ink);
+    }
+
+    .example strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      font-size: 13px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .page { padding-top: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">Cloud Service Preview</div>
+      <h1>智能工单 Agent</h1>
+      <p class="lead">
+        业务人员不再需要本地黑框。直接在网页里发起 IT 报修、财务报销或预算查询，系统会自动调用工单能力并返回处理结果。
+      </p>
+      <div class="pill-row">
+        <span class="pill">FastAPI API</span>
+        <span class="pill">Vercel-ready</span>
+        <span class="pill">Cloud DB Ready</span>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card chat-card">
+        <h2 class="section-title">对话入口</h2>
+        <p class="section-copy">输入自然语言需求，Agent 会自动判断是查预算、提交 IT 工单还是创建报销申请。</p>
+        <div id="messages" class="messages">
+          <div class="message agent">欢迎使用智能工单 Agent。你可以直接说：“我是李四，帮我查一下还能报销多少钱？”</div>
+        </div>
+        <div class="composer">
+          <textarea id="messageInput" placeholder="例如：我是张三，电脑蓝屏了，帮我提一个 IT 报修工单"></textarea>
+          <div class="actions">
+            <button id="sendButton" class="primary">发送请求</button>
+            <button id="clearButton" class="secondary" type="button">清空记录</button>
+            <span id="status" class="status">等待请求</span>
+          </div>
+        </div>
+      </article>
+
+      <aside class="card examples-card">
+        <h2 class="section-title">业务示例</h2>
+        <p class="section-copy">这些示例可以直接点击填入输入框，方便非技术同事上手。</p>
+        <div class="example-list">
+          <button class="example" type="button" data-text="我是李四，帮我查一下我还剩多少报销额度">
+            <strong>查询预算</strong>
+            我是李四，帮我查一下我还剩多少报销额度
+          </button>
+          <button class="example" type="button" data-text="我是李四，刚买办公用品花了 200 元，帮我提交财务报销">
+            <strong>提交报销</strong>
+            我是李四，刚买办公用品花了 200 元，帮我提交财务报销
+          </button>
+          <button class="example" type="button" data-text="我是张三，电脑频繁蓝屏，帮我提交一个 IT 报修工单">
+            <strong>IT 报修</strong>
+            我是张三，电脑频繁蓝屏，帮我提交一个 IT 报修工单
+          </button>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const messages = document.getElementById("messages");
+    const input = document.getElementById("messageInput");
+    const sendButton = document.getElementById("sendButton");
+    const clearButton = document.getElementById("clearButton");
+    const statusEl = document.getElementById("status");
+
+    function appendMessage(role, text) {
+      const el = document.createElement("div");
+      el.className = `message ${role}`;
+      el.textContent = text;
+      messages.appendChild(el);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = input.value.trim();
+      if (!text) {
+        statusEl.textContent = "请输入内容后再发送";
+        return;
+      }
+
+      appendMessage("user", text);
+      input.value = "";
+      sendButton.disabled = true;
+      statusEl.textContent = "Agent 正在处理中...";
+      statusEl.className = "status";
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.detail || "请求失败");
+        }
+
+        appendMessage("agent", data.reply);
+        statusEl.textContent = data.action ? `已完成：${data.action}` : "处理完成";
+        statusEl.className = "status ok";
+      } catch (error) {
+        appendMessage("agent", `请求失败：${error.message}`);
+        statusEl.textContent = "调用失败";
+        statusEl.className = "status";
+      } finally {
+        sendButton.disabled = false;
+      }
+    }
+
+    sendButton.addEventListener("click", sendMessage);
+    clearButton.addEventListener("click", () => {
+      messages.innerHTML = '<div class="message agent">欢迎使用智能工单 Agent。你可以直接说：“我是李四，帮我查一下还能报销多少钱？”</div>';
+      input.value = "";
+      statusEl.textContent = "记录已清空";
+      statusEl.className = "status";
+    });
+
+    input.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        sendMessage();
+      }
+    });
+
+    document.querySelectorAll(".example").forEach((button) => {
+      button.addEventListener("click", () => {
+        input.value = button.dataset.text || "";
+        input.focus();
+      });
+    });
+  </script>
+</body>
+</html>
