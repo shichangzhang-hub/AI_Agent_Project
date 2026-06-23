@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
@@ -22,9 +22,9 @@ from smart_ticket_agent.service import ServiceError, create_ticket, get_employee
 
 
 app = FastAPI(
-    title="智能工单 Agent",
-    version="2.0.0",
-    description="企业智能工单与报销 Agent 的云端 API。",
+    title="Smart Ticket Agent",
+    version="2.0.1",
+    description="Cloud API for the smart ticket and reimbursement agent.",
 )
 
 init_database()
@@ -38,26 +38,6 @@ app.add_middleware(
 )
 
 public_dir = Path(__file__).resolve().parent.parent / "public"
-default_home_html = """
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智能工单 Agent</title>
-</head>
-<body>
-  <h1>智能工单 Agent</h1>
-  <p>请打开 public/index.html 使用完整前端页面。</p>
-</body>
-</html>
-""".strip()
-
-home_html = (
-    (public_dir / "index.html").read_text(encoding="utf-8")
-    if (public_dir / "index.html").exists()
-    else default_home_html
-)
 
 
 @app.get("/api/health")
@@ -66,8 +46,8 @@ def health_check() -> dict[str, str]:
 
 
 @app.get("/", include_in_schema=False)
-def index() -> HTMLResponse:
-    return HTMLResponse(home_html)
+def index() -> RedirectResponse:
+    return RedirectResponse(url="/index.html", status_code=307)
 
 
 @app.get("/api/employees", response_model=list[EmployeeSummary])
