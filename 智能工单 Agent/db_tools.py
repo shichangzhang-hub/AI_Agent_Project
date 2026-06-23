@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from datetime import date
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -30,14 +31,22 @@ def submit_ticket(employee_name: str, issue_type: str, description: str, amount:
     init_database()
     with session_scope() as session:
         try:
+            payload = {
+                "employee_name": employee_name,
+                "issue_type": issue_type,
+                "description": description,
+                "amount": amount,
+            }
+            if issue_type == "财务报销":
+                payload.update(
+                    expense_category="其他",
+                    expense_date=date.today().isoformat(),
+                    vendor="本地脚本提交",
+                    receipt_attached=True,
+                )
             result = service_create_ticket(
                 session,
-                TicketCreateRequest(
-                    employee_name=employee_name,
-                    issue_type=issue_type,
-                    description=description,
-                    amount=amount,
-                ),
+                TicketCreateRequest(**payload),
             )
             return result.message
         except ServiceError as exc:
